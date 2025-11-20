@@ -29,20 +29,30 @@ class Terreno:
     def permite_paso_terreno(self):
         return True
 
-
+##########################################################
 class Camino(Terreno):
     
+     #Función que carga la imagen del camino del laberinto 
+    def __init__(self):
+       
+       # Se define la ruta donde esta la imagen
+        imagen_completa = os.path.join(BASE_DIR, "Imagenes", "Camino.jpg")
+        #Se abre la carpeta que contiene la imagen 
+        imagen_pillow = Image.open(imagen_completa).resize((64, 64), Image.LANCZOS)
+         # convierte una imagen de PIL a un formato que Tkinter sí puede mostrar en canvas, label, button
+        self.imagen = ImageTk.PhotoImage(imagen_pillow)
+    
     # Función que permite caminar sobre la celda que es "Camino"
-    def permite_paso_camnino(self):
+    def permite_paso_camino(self):
         return True
-
+##########################################################
 class Muro(Terreno):
 
     #Función que carga la imagen del muro del laberinto 
     def __init__(self):
        
        # Se define la ruta donde esta la imagen
-        imagen_completa = os.path.join(BASE_DIR, "Imagenes", "muro.png")
+        imagen_completa = os.path.join(BASE_DIR, "Imagenes", "Muro.jpg")
         #Se abre la carpeta que contiene la imagen 
         imagen_pillow = Image.open(imagen_completa).resize((64, 64), Image.LANCZOS)
          # convierte una imagen de PIL a un formato que Tkinter sí puede mostrar en canvas, label, button
@@ -51,14 +61,15 @@ class Muro(Terreno):
     # Función que no permite caminar sobre la celda que es "Muro"
     def permite_paso_muro(self):
         return False
-
+    
+##########################################################
 class Tunel(Terreno):
     
     #Función que carga la imagen del tunel del laberinto 
     def __init__(self):
     
         # Se define la ruta donde esta la imagen
-        imagen_completa = os.path.join(BASE_DIR, "Imagenes", "tunel.png")
+        imagen_completa = os.path.join(BASE_DIR, "Imagenes", "Tunel.png")
         #Se abre la carpeta que contiene la imagen
         imagen_pillow = Image.open(imagen_completa).resize((64, 64), Image.LANCZOS)
         # convierte una imagen de PIL a un formato que Tkinter sí puede mostrar en canvas, label, button
@@ -67,14 +78,14 @@ class Tunel(Terreno):
     # Función que permite caminar sobre la celda que es "Tunel"
     def permite_paso_tunel(self):
         return True
-
+##########################################################
 class Liana(Terreno):
     
     #Función que carga la imagen de liana del laberinto 
     def __init__(self):
        
         # Se define la ruta donde esta la imagen
-        imagen_completa = os.path.join(BASE_DIR, "Imagenes", "liana.png")
+        imagen_completa = os.path.join(BASE_DIR, "Imagenes", "Liana.jpg")
         #Se abre la carpeta que contiene la imagen
         imagen_pillow = Image.open(imagen_completa).resize((64, 64), Image.LANCZOS)
          # convierte una imagen de PIL a un formato que Tkinter sí puede mostrar en canvas, label, button
@@ -96,7 +107,6 @@ class MapaJuego:
         # 2  = Tunel
         # 3 = Liana 
 
-
     def __init__(self, canvas_juego):
         
         # Ajusta el tamaño del mapa al canvas 
@@ -105,13 +115,13 @@ class MapaJuego:
         # Tamaño de cada celda en el laberint 
         self.tamano_celda = 64
         
-###############  
 
     #Función que genera mapas aleatorios       
     def generar_mapas_aleatorios(self):
         
         #Se actualiza el tamaño real del canvas antes de usarlo.
-        self.canvas_juego.update_idletasks()
+        self.canvas_juego.update() 
+        
         
         # Se determina el tamño del canvas laberinto 
         ancho_canvas_laberinto = self.canvas_juego.winfo_width()
@@ -524,7 +534,7 @@ class PantallaPrincipal:
                                     borderwidth=0,
                                     relief="flat",
                                     cursor="hand2",
-                                    command=self.juego_cazador   #Se llama a la función que contiene el juego de "Cazador"
+                                    command=self.canvas_juego_cazador   #Se llama a la función que contiene el juego de "Cazador"
                                 )
         boton_cazador.image = img_cazador_tk  # evita el borrado de la imagen 
         #boton_cazador.pack(pady=10)
@@ -549,7 +559,7 @@ class PantallaPrincipal:
                                 borderwidth=0,
                                 relief="flat",
                                 cursor="hand2",
-                                command=self.juego_escapar   #Se llama a la función que contiene el juego de "Escapar"
+                                command=self.canvas_juego_escapar   #Se llama a la función que contiene el juego de "Escapar"
                                 )
         boton_escapar.image = img_escapar_tk # evita el borrado de la imagen 
         #boton_escapar.pack(pady=5)
@@ -586,11 +596,57 @@ class PantallaPrincipal:
                                                 height=600,
                                                 bg="black"      #
                                             )
+            # Se actualiza el canvas para saber su tamaño antes de dibujar las filas y columnas
             self.canvas_cazador.pack(fill="both", expand=True)
+            self.canvas_cazador.update() 
 
             # Mensaje en consola para confirmar que se abrió correctamente
             print("Juego Cazador iniciado: canvas creado")
             
+            # A la variable laberinto se le asigna la clase MapaJuego (que define el tamaño de las celdas, la creación del mapa aleatorio y las entradas y salidas del laberinto)
+             # self.canvas_cazador: Hace que la clase MapaJuego tome el tamaño del canvas que esta definido para el juego de cazador 
+            laberinto = MapaJuego(self.canvas_cazador)
+            
+            # De la clase "MapaJuego" se llama a la función "generar_mapas_aleatorios" que retorna una matriz de objetos  
+    
+                #[[Camino(), Muro(), Liana()],
+                # [Tunel(), Camino(), Muro()],
+                #[Liana(), Liana(), Camino()]]
+            
+            matriz_diferentes_terrenos = laberinto.generar_mapas_aleatorios()
+            
+            # Se guarda la matriz del laberinto dentro de la clase
+            self.matriz_terrenos_cazador = matriz_diferentes_terrenos      
+
+            # Tamaño de cada celda del laberinto 
+            tamano_celda = 64
+            
+#############
+            # Se dibuja el laberinto 
+            
+            # Mantiene vivas la imagenes del laberinto en memoria para que no sean borradas por tkinter 
+            self.imagenes_terreno_guardadas = []  
+
+            # Se rrecorre las filas del laberinto 
+            for fila in range(len(matriz_diferentes_terrenos)):
+                 # Se corrre las columnas del laberinto 
+                for columna in range(len(matriz_diferentes_terrenos[0])):
+
+                    terreno = matriz_diferentes_terrenos[fila][columna]
+
+                    # Guarda la referencia para que no sea borrada por Tkinter 
+                    self.imagenes_terreno_guardadas.append(terreno.imagen)
+
+                    self.canvas_cazador.create_image(
+                                                        columna * tamano_celda,
+                                                        fila * tamano_celda,
+                                                        image=terreno.imagen,
+                                                        anchor="nw"
+                                                    )
+
+            print("✔ Laberinto dibujado correctamente.")
+            
+
  ##################################################################
  
     # Función que permite mover al jugador usando las teclas de direcciones 
@@ -621,7 +677,10 @@ class PantallaPrincipal:
                                         image=self.cazador.img[self.cazador.direccion]
                                     )
 
-
+ ##################################################################
+    def canvas_juego_escapar(self):
+            messagebox.showinfo("Escapar", "El modo Escapar aún no está implementado.")
+            print("Juego Escapar iniciado")
  
         
  ###############################################
@@ -667,9 +726,9 @@ class Cazador:
         
         
  ###############################################
-    # Función del juego ESCAPAR
+    # Clase del juego ESCAPAR
  ###############################################
+ 
 
-    def juego_escapar(self):
-            messagebox.showinfo("Escapar", "El modo Escapar aún no está implementado.")
-            print("Juego Escapar iniciado")
+
+    
