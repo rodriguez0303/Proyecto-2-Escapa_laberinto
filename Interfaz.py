@@ -125,33 +125,31 @@ class MapaJuego:
         # Ajusta el tamaño del mapa al canvas 
         self.canvas_juego = canvas_juego
 
-        # Tamaño de cada celda en el laberint 
+        # Tamaño de cada celda en el laberinto 
         self.tamano_celda = 64
         
         self.columnas_fijas = None
         self.filas_fijas = None
         
-
-    #Función que genera mapas aleatorios       
+#################################
+        
+    # Función que genera los mapas aleatorios 
     def generar_mapas_aleatorios(self):
-        
-        #Se actualiza el tamaño real del canvas antes de usarlo.
-        self.canvas_juego.update() 
+
+        # Se actualiza el canvas que contiene el laberinto 
+        self.canvas_juego.update()
         self.canvas_juego.update_idletasks()
-        
-        
-        # Se determina el tamño del canvas laberinto 
+
+        # Se obtiene el tamaño del canvas (laberinto)
         ancho_canvas_laberinto = self.canvas_juego.winfo_width()
         alto_canvas_laberinto  = self.canvas_juego.winfo_height()
-        
+
+        # El tamaño de cada celda es de 64 pixeles 
         if ancho_canvas_laberinto < 64 or alto_canvas_laberinto < 64:
-            print("⚠ ERROR: El canvas aún no tiene tamaño suficiente.")
+            print("El canvas aún no tiene tamaño suficiente.")
             return None
-        
-        # Se convierte los pixeles del laberinto a celdas (cuadrantes)
-        #cantidad_columnas_laberinto = ancho_canvas_laberinto// self.tamano_celda
-        #cantidad_filas_laberinto  = alto_canvas_laberinto  // self.tamano_celda
-        
+
+        # Se determina número de filas y columnas que tendrá el laberinto 
         if self.columnas_fijas is not None:
             cantidad_columnas_laberinto = self.columnas_fijas
         else:
@@ -162,135 +160,121 @@ class MapaJuego:
         else:
             cantidad_filas_laberinto = alto_canvas_laberinto // self.tamano_celda
 
-                
-        #Creación de matriz (inicialmente solo con muros =1)
-        matriz = [] 
+        # Inicialmente se crea la matriz del laberinto lleno de 1 (Muro)
+         # Evita que existan valores aleatorios que impida generar salidas o caminos 
+        matriz = []
         for i in range(cantidad_filas_laberinto):
             fila = []
             for j in range(cantidad_columnas_laberinto):
-                fila.append(1)  # 1 = Muro
-            matriz.append(fila) # Se agrega la fila completa a la matriz 
-
-
-    # Creación de varias salidas en el laberinto 
-        
-        # Cantidad de salidas que se tendrá en cada lado del laberinto 
+                fila.append(1)  # 1 = muro
+            matriz.append(fila)
+            
+#################################
+        #Se crean las salidas del laberinto (arriba, abajo, izquierda o derecha)
         cantidad_salidas_por_borde = 2
-#######
-        
-        # Creación de salidas al lado izquierdo del laberinto 
-        for numero_de_salida in range(cantidad_salidas_por_borde):
 
-            # Selección de  fila aleatoria, sin usar la primera ni la última
-            fila_elegida = random.randint(1, cantidad_filas_laberinto- 2)
-
-            # La salida siempre está en la primera columna (columna 0) porque es el borde del laberinto 
-            columna_izquierda = 0
-
-            # Se cambia el valor de la celda que inicialmente están en 1 a 4 (salida del laberinto)
-            matriz[fila_elegida][columna_izquierda] = 4
-            
-#######            
-        #Creación de salidas al lado derecho del laberinto 
-        for numero_de_salida in range(cantidad_salidas_por_borde):
-
+        # Salidas izquierda
+         # se coloca -2 para no usar ni la primer fila ni la última columna 
+         # random.randint= genera un número entero aleatorio entre a y b
+        for _ in range(cantidad_salidas_por_borde):
             fila_elegida = random.randint(1, cantidad_filas_laberinto - 2)
+            matriz[fila_elegida][0] = 4  # posición #4 = salida
 
-            #Como el indice incia en 0 y no en 1 para que no provoque el out of index se le resta 1 a la fila (columna final del laberinto)
-            columna_derecha = cantidad_columnas_laberinto - 1  
+        # Salidas derecha
+        for _ in range(cantidad_salidas_por_borde):
+            #se coloca -2 para no usar ni la primer fila ni la última columna 
+            # random.randint= genera un número entero aleatorio entre a y b
+            fila_elegida = random.randint(1, cantidad_filas_laberinto - 2)
+            matriz[fila_elegida][cantidad_columnas_laberinto - 1] = 4 # posición #4 = salida
 
-            # Se cambia el valor de la celda que inicialmente están en 1 a 4 (salida del laberinto)
-            matriz[fila_elegida][columna_derecha] = 4
-#######
+        # Salida arriba
+        columna_superior = random.randint(1, cantidad_columnas_laberinto - 2)
+        matriz[0][columna_superior] = 4 # posición #4 = salida
+
+        # Salida abajo
+        columna_inferior = random.randint(1, cantidad_columnas_laberinto - 2)
+        matriz[cantidad_filas_laberinto - 1][columna_inferior] = 4 # posición #4 = salida
+
+#################################
+        # Creación del camino en el laberinto (no esta obstruido por valores aleatorios)
+
+        # Se toma la fila central del laberinto 
+        fila_central = cantidad_filas_laberinto // 2
+
+        # Se crea la fila horizontal (camino) sin interrupciones 
+        for c in range(cantidad_columnas_laberinto):
+            matriz[fila_central][c] = 0  # posición #0 = camino
             
-        # Creación de salida en la parte superior del laberinto 
+#################################
+        # Conexión entre la salidas y el camino central (sin obstrucciones)
 
-        #Se selecciona una columna (superior) al azar para que sea una salida 
-        columna_aleatoria_superior = random.randint(1, cantidad_columnas_laberinto - 2)
-            
-        # Se asgina el valor de la fila superior en 0 para que pueda salir del laberinto 
-        fila_superior = 0
+            # Se rrecorre todas las filas y columnas del laberinto para encontrar las salidas (=4) 
+        for fila in range(cantidad_filas_laberinto):
+            for columna in range(cantidad_columnas_laberinto):
 
-        # Se cambia el valor de la celda que inicialmente están en 1 a 4 (salida del laberinto)
-        matriz[fila_superior][columna_aleatoria_superior] = 4
-#######
+                # Se evalúa si la posición del laberinto es una salida = 4
+                if matriz[fila][columna] == 4:  # posición #4 = salida
 
-        # Creación de salida en la parte inferior del laberinto 
+                    # Si la salida que se genera de forma aleatoria aparece en una posición diferente al camino 
+                    if fila < fila_central:
+                        # La salida está arriba del camino, hay que bajar
+                        paso = 1
+                    else:
+                        # La salida está abajo del camino, hay que subir
+                        paso = -1
 
-         #Se selecciona una columna (inferior) al azar para que sea una salida 
-        columna_aleatoria_inferior = random.randint(1, cantidad_columnas_laberinto - 2)
-        
-        #Como el indice incia en 0 y no en 1 para que no provoque el out of index se le resta 1 a la fila 
-        fila_inferior = cantidad_filas_laberinto - 1
+                    fila_actual = fila
 
-        # Se cambia el valor de la celda que inicialmente están en 1 a 4 (salida del laberinto)
-        matriz[fila_inferior][columna_aleatoria_inferior] = 4
-        
-#######
-        # Se rellena el laberinto con valores aleatorios (camino,muro,tunel,liana) dejando intacto las salidas del laberinto que se definieron previamente 
+                    # Crear camino vertical desde la salida hacia el camino central
+                    while fila_actual != fila_central:
+                        fila_actual += paso
+                        matriz[fila_actual][columna] = 0  # posición #0 = camino
 
-        # Se recorre el laberinto (filas) 
-        for numero_fila in range(cantidad_filas_laberinto):
-            # Se rrecorre el laberinto (columnas)
-            for numero_columna in range(cantidad_columnas_laberinto):
+#################################
+
+        # Se completa el laberinto que no es camino con valores aleatorios (muro, tunel o liana)  
+        for fila in range(cantidad_filas_laberinto):
+            for columna in range(cantidad_columnas_laberinto):
+
+                # Si el valor de la matriz es 0 (salida) o 4 (salida) No se debe modificar caminos ni salidas
+                if matriz[fila][columna] == 0 or matriz[fila][columna] == 4:
+                    continue
+
+                matriz[fila][columna] = random.choice([1, 2, 3])
+                # 1 = muro
+                # 2 = tunel
+                # 3 = liana
                 
-                # Valor actual de la celda
-                celda_actual = matriz[numero_fila][numero_columna]
+#################################
+        # Se convierte los números de la matriz a objetos 
+         # Se utilizará más adelante para definir si es un jugador cazador o jugador escapar puede moverse o no a traves del laberinto 
 
-                #Si la celda es camino (0) no se toca 
-                if celda_actual == 0:
-                    matriz[numero_fila][numero_columna] = 0
-
-                # Si la celda es salida (4) no se toca 
-                elif celda_actual == 4:
-                    matriz[numero_fila][numero_columna] = 4
-
-                # Si NO es 0, se le asigna a la celda un valor aleatorio (camino =0, muro =1, tunel =2 y liana = 3)
-                else:
-                    nuevo_valor = random.choice([0, 1, 2, 3])
-
-                    # Se reemplaza el valor por defecto de 1 por el nuevo valor
-                    matriz[numero_fila][numero_columna] = nuevo_valor
-                    
-#######  
-        # Se convierte la matriz numérica [0,1,2,3] a objetos 
-
-        # Se guarda la nueva matriz ya convertida a objetos
         matriz_de_objetos = []
 
-        # Se rrecore todas las filas de la matriz 
-        for numero_fila in matriz:
-
-            # Se crea una nueva fila vacía para almacenar los objetos
+        for fila_numerica in matriz:
             fila_convertida = []
 
-            # Se recorre cada fila de la matriz 
-            for valor_celda in numero_fila:
-
-                # Si la celda es 0 se asigna el objeto de  Camino
+            for valor_celda in fila_numerica:
+                # 0 = camino
+                # 1 = muro
+                # 2 = tunel
+                # 3 = liana
+                # 4 = salida 
+                
                 if valor_celda == 0:
                     fila_convertida.append(Camino())
-
-                # Si es 1 se asigna el objeto de Muro
                 elif valor_celda == 1:
                     fila_convertida.append(Muro())
-
-                # Si es 2 se asigna el objeto de Tunel
                 elif valor_celda == 2:
                     fila_convertida.append(Tunel())
-
-                # Si es 3 se asigna el objeto de  Liana
                 elif valor_celda == 3:
                     fila_convertida.append(Liana())
-                
-                # Si es 4 se asigna el objeto de salida    
                 elif valor_celda == 4:
                     fila_convertida.append(Salida())
 
-            # Se agrega la fila convertida a la matriz final
             matriz_de_objetos.append(fila_convertida)
 
-        # Se devuelve la matriz convertida
+        # Retornar matriz lista
         return matriz_de_objetos
 
 ##########################################################
@@ -425,7 +409,7 @@ class PantallaPrincipal:
         ventana_nombre.attributes('-topmost', True)
 
         # Se coloca una imagen a la pantalla de ingresar los datos del usuario 
-        ruta_fondo = os.path.join(BASE_DIR, "Imagenes", "Fondo4.jpg")
+        ruta_fondo = os.path.join(BASE_DIR, "Imagenes", "Fondo6.jpg")
         imagen_fondo = Image.open(ruta_fondo)
         imagen_fondo_tk = ImageTk.PhotoImage(imagen_fondo.resize((300, 200), Image.LANCZOS))
 
@@ -700,35 +684,107 @@ class PantallaPrincipal:
             self.cazador.cambia_direccion_jugador("derecha")
             self.cazador.mover_jugador_cazador(+1, 0)
             
-        # #Actualiza la imagen del jugador conforme se presione la tecla de dirección 
-        # self.canvas_cazador.itemconfig(
-        #                                 self.self.cazador.imagen_id,
-        #                                 image=self.cazador.img[self.cazador.direccion]
-        #                             )
         
- ##################################################################
-    # Función que valida que el jugador - cazador aparezca en posiciones válidas que le permitan moverse 
+ ##################################################################  
+ 
+    # Función que valida que el jugador aparezca de forma aleatoria en una posición que le sea válida para moverse  
+    def celda_para_mover_jugador(self, fila, columna):
+
+        # Toma la celda donde se quiere colocar el jugador
+        celda_actual = self.matriz_terrenos_cazador[fila][columna]
+
+        # Se valida que el jugador aparezca en una posición válida (camino o tunel) de manera tal que le permita moverse 
+        if not isinstance(celda_actual, Camino) and not isinstance(celda_actual, Tunel):
+            return False  # Si aparece en liana o muro, NO sirve la ubicación debe elegirse otra 
+
+        # Se obtiene el tamaño del laberinto 
+        total_filas = len(self.matriz_terrenos_cazador)
+        total_columnas = len(self.matriz_terrenos_cazador[0])
+        
+#########
+        # Se valida que el jugador pueda moverse al menos un espacio hacia arriba
+        if fila - 1 >= 0:
+            # Se determina la posición de la celda superior 
+            celda_arriba = self.matriz_terrenos_cazador[fila - 1][columna]
+            # Se evalúa si la celda es válida para moverse 
+            if isinstance(celda_arriba, Camino) or isinstance(celda_arriba, Salida) or isinstance(celda_arriba, Tunel):
+                return True
+            
+#########
+        #Se valida que el jugador pueda moverse al menos un espacio hacia abajo
+        if fila + 1 < total_filas:
+            # Se determina la posición de la celda de abajo
+            celda_abajo = self.matriz_terrenos_cazador[fila + 1][columna]
+            # Se evalúa si la celda es válida para moverse 
+            if isinstance(celda_abajo, Camino) or isinstance(celda_abajo, Salida) or isinstance(celda_abajo, Tunel):
+                return True
+            
+#########
+        #Se valida que el jugador pueda moverse al menos un espacio hacia la izquierda
+        if columna - 1 >= 0:
+            # Se determina la posición de la celda izquierda
+            celda_izq = self.matriz_terrenos_cazador[fila][columna - 1]
+            # Se evalúa si la celda es válida para moverse 
+            if isinstance(celda_izq, Camino) or isinstance(celda_izq, Salida) or isinstance(celda_izq, Tunel):
+                return True
+#########
+
+        ##Se valida que el jugador pueda moverse al menos un espacio hacia la derecha
+        if columna + 1 < total_columnas:
+            # Se determina la posición de la celda derecha 
+            celda_der = self.matriz_terrenos_cazador[fila][columna + 1]
+            # Se evalúa si la celda es válida para moverse 
+            if isinstance(celda_der, Camino) or isinstance(celda_der, Salida) or isinstance(celda_der, Tunel):
+                return True
+
+        # Si no encontró salida, se está atrapado y se busca otra posición para colocar al jugador 
+        return False
+
+ ##################################################################    
+    
+    # #Función que valida el lugar en el que se coloca  el jugador (solo lo coloca si es una posición válida para moverse) 
     def buscar_casilla_valida_jugador(self):
-        
-        # Se determina la cantidad de filas de la matriz 
+
+        # Se obtiene la cantidad de filas y columnas del laberinto 
         filas = len(self.matriz_terrenos_cazador)
-        
-        # Se determina la cantidad de columnas de la matriz 
         columnas = len(self.matriz_terrenos_cazador[0])
 
-        #Se selecciona una fila y columna de forma aleatoria 
+        # Se valida hasta que encuentre una posición válida aleatoria (True) que permita mover el jugador 
         while True:
-             # Se usa 1 y filas - 2 para evitar bordes que son salidas.
-            fila_puede_moverse = random.randint(1, filas - 2)
-            columna_puede_moverse = random.randint(1, columnas - 2)
+            fila = random.randint(1, filas - 2)
+            columna = random.randint(1, columnas - 2)
 
-            celda = self.matriz_terrenos_cazador[fila_puede_moverse][columna_puede_moverse]
+            celda_actual = self.matriz_terrenos_cazador[fila][columna]
 
-            # Valida que el jugador - cazador aparezca en casillas que sean camino o liana 
-            if isinstance(celda, Camino) or isinstance(celda, Liana):
-                return columna_puede_moverse, fila_puede_moverse 
+            # Si el jugador no aparece en el camino se vuelve a intentar colocarlo en otra posición 
+            if not isinstance(celda_actual, Camino):
+                continue   
+
+            # Se revia las 4 posiciones alrededor del jugador y valida que al menos una de ellas permite el movimiento del jugador
+            vecinos = [
+                        (fila - 1, columna),
+                        (fila + 1, columna),
+                        (fila, columna - 1),
+                        (fila, columna + 1)
+                    ]
+
+            movilidad = False
+
+            for fila_vecina, columna_vecina in vecinos:
+                if 0 <= fila_vecina < filas and 0 <= columna_vecina < columnas:
+                    celda_vecina = self.matriz_terrenos_cazador[fila_vecina][columna_vecina]
+
+                    # El jugador solo puede caminar en "camino" o "salida"
+                    if isinstance(celda_vecina, Camino) or isinstance(celda_vecina, Salida):
+                        movilidad = True
+                        break
+
+            if movilidad:
+                return columna, fila
 
 
+ ##################################################################
+    
  ##################################################################
     def canvas_juego_escapar(self):
             messagebox.showinfo("Escapar", "El modo Escapar aún no está implementado.")
@@ -831,17 +887,25 @@ class Cazador:
         # Si la celda es un muro el jugador - cazador no puede pasar 
         if isinstance(celda, Muro):
             return False  
-
-        # Si la celda es un tunel el jugador - cazador no puede pasar 
-        if isinstance(celda, Tunel):
-            return False  
         
-        # Si la celda es la salida el jugador - cazador no puede pasar
+        # Si la celda es una liana el jugador - cazador no puede pasar 
+        if isinstance(celda, Liana):
+            return False
+
+        # Si la celda es un tunel el jugador - cazador puede pasar 
+        if isinstance(celda, Tunel):
+            return True 
+        
+        # Si la celda es un camnioi el jugador - cazador puede pasar
+        if isinstance(celda, Camino):
+            return True
+        
+        # Si la celda es la salida el jugador - cazador puede pasar
         if isinstance(celda, Salida):
-            return False 
+            return True
 
         # Si la celda es un camino, liana y Salida si puede pasar 
-        return True       
+        return False       
  ###############################################
     # Función que permite el movimiento del jugador - cazador 
     
