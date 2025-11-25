@@ -3,6 +3,7 @@ from tkinter import messagebox
 from tkinter import *
 from PIL import Image, ImageTk  # Usamos Pillow para cargar imágenes JPG
 import os 
+import time
 import random #se utilizará para generar el laberinto 
 import winsound  # se utilizará para reproducir  la música  
 import threading #  Se utilizará para ejecutar los hilos 
@@ -450,6 +451,7 @@ class PantallaPrincipal:
             # Se guarda el nombre del jugador en un archivo TXT 
             with open("JugadoresCHAT.txt", "a") as archivo:
                 archivo.write(f"{nombre_jugador},0\n")
+                self.nombre_jugador = nombre_jugador
 
             # Cierra la ventana
             ventana_nombre.destroy()
@@ -569,6 +571,8 @@ class PantallaPrincipal:
         # Se crea ventana del modo cazador
         ventana_cazador = tk.Toplevel(self.pantalla_principal)
         ventana_cazador.title("Modo Cazador")
+        
+        self.ventana_cazador = ventana_cazador
 
         # Actualiza la ventana que contiene el juego cazador
         ventana_cazador.update_idletasks()
@@ -661,6 +665,9 @@ class PantallaPrincipal:
 
         print("Cazador colocado en pantalla.")
         
+        # Se inicializa los labels de puntaje y tiempo para el modo cazador
+        self.inicia_tiempo_puntaje_cazador()
+        
         # Se Crea el enemigo #1 del juego cazador
         
         pos_enemigo1_x, pos_enemigo1_y = self.buscar_casilla_valida_jugador()
@@ -699,14 +706,6 @@ class PantallaPrincipal:
         self.enemigo1.mover_enemigo1()
         self.enemigo2.mover_enemigo2()
         self.enemigo3.mover_enemigo3()
-
-
-
- ##################################################################
-    def canvas_juego_escapar(self):
-            messagebox.showinfo("Escapar", "El modo Escapar aún no está implementado.")
-            print("Juego Escapar iniciado")
- 
  
   ##################################################################
     # Función que permite mover al jugador usando las teclas de direcciones 
@@ -731,8 +730,233 @@ class PantallaPrincipal:
             self.cazador.cambia_direccion_jugador("derecha")
             self.cazador.mover_jugador_cazador(+1, 0)
             
-        
  ##################################################################  
+ 
+    #Función que determina el puntaje del cazador           
+    def puntaje_cazador(self):
+        
+        # Se obtiene la posición ACTUAL del cazador desde su objeto real
+        fila_cazador = self.cazador.posicion_inicial_cazador_ejey
+        col_cazador  = self.cazador.posicion_inicial_cazador_ejex
+
+####### Enemigo #1  
+      
+        # Se revisa si el enemigo todavía existe en el canvas
+        if hasattr(self, "enemigo1") and self.canvas_cazador.coords(self.enemigo1.enemigo1_objeto):
+            
+            # Se obtiene la ubicación del enemigo #1
+            fila_enemigo1 = self.enemigo1.posicion_inicial_enemigo1_ejey
+            col_enemigo1  = self.enemigo1.posicion_inicial_enemigo1_ejex
+
+            # Se valida si la posición del cazador es la misma que tiene el enemigo 
+            if (fila_cazador, col_cazador) == (fila_enemigo1, col_enemigo1):
+
+                print("Cazador atrapó al ENEMIGO 1")
+
+                # Al puntaje se le suma 5 puntos por atrapar al enemigo 
+                self.puntaje_cazador += 5
+                self.actualizar_texto_puntaje_cazador()
+
+                # Se elimina el enemigo al ser tocado por el cazador 
+                self.canvas_cazador.delete(self.enemigo1.enemigo1_objeto)
+
+####### Enemigo #2  
+     
+        # Se revisa si el enemigo todavía existe en el canvas
+        if hasattr(self, "enemigo2") and self.canvas_cazador.coords(self.enemigo2.enemigo2_objeto):
+            
+            # Se obtiene la ubicación del enemigo #2
+            fila_enemigo2 = self.enemigo2.posicion_inicial_enemigo2_ejey
+            col_enemigo2  = self.enemigo2.posicion_inicial_enemigo2_ejex
+
+            # Se valida si la posición del cazador es la misma que tiene el enemigo 
+            if (fila_cazador, col_cazador) == (fila_enemigo2, col_enemigo2):
+
+                print("Cazador atrapó al ENEMIGO 2")
+
+                # Al puntaje se le suma 5 puntos por atrapar al enemigo 
+                self.puntaje_cazador += 5
+                self.actualizar_texto_puntaje_cazador()
+
+                # Se elimina el enemigo al ser tocado por el cazador 
+                self.canvas_cazador.delete(self.enemigo2.enemigo2_objeto)
+
+    ####### Enemigo #3
+
+        # Se revisa si el enemigo todavía existe en el canvas
+        if hasattr(self, "enemigo3") and self.canvas_cazador.coords(self.enemigo3.enemigo3_objeto):
+            
+            # Se obtiene la ubicación del enemigo #2
+            fila_enemigo3 = self.enemigo3.posicion_inicial_enemigo3_ejey
+            col_enemigo3  = self.enemigo3.posicion_inicial_enemigo3_ejex
+
+            # Se valida si la posición del cazador es la misma que tiene el enemigo 
+            if (fila_cazador, col_cazador) == (fila_enemigo3, col_enemigo3):
+
+                print("Cazador atrapó al ENEMIGO 3")
+
+                # Al puntaje se le suma 5 puntos por atrapar al enemigo 
+                self.puntaje_cazador += 5
+                self.actualizar_texto_puntaje_cazador()
+
+                # Se elimina el enemigo al ser tocado por el cazador 
+                self.canvas_cazador.delete(self.enemigo3.enemigo3_objeto)
+
+
+ ##################################################################  
+
+    # Función que crea el label del puntaje y el temporizador del modo cazador
+    def inicia_tiempo_puntaje_cazador(self):
+
+        # Puntaje inicial del cazador
+        if not hasattr(self, "puntaje_cazador"):
+            self.puntaje_cazador = 0
+
+        # Tiempo total del juego (1 minuto 30 segundos = 90s)
+        self.tiempo_restante_cazador = 90
+
+        # Label del puntaje (arriba a la izquierda)
+        self.label_puntaje_cazador = tk.Label(
+                                                self.ventana_cazador,
+                                                text="Puntos: 0",
+                                                bg="black",
+                                                fg="white",
+                                                font=("Arial", 14, "bold")
+                                            )
+        self.label_puntaje_cazador.place(x=10, y=10)
+
+        # Se coloca el Label del temporizador (a la par del puntaje)
+        self.label_temporizador_cazador = tk.Label(
+                                                    self.ventana_cazador,
+                                                    text="Tiempo: 01:30",
+                                                    bg="black",
+                                                    fg="white",
+                                                    font=("Arial", 14, "bold")
+                                                )
+        self.label_temporizador_cazador.place(x=150, y=10)
+
+        # Inicia el conteo regresivo
+        self.temporizador_cazador()
+
+
+ ##################################################################  
+ 
+    # Función auxiliar que actualiza el tiempo cada segundo
+    def temporizador_cazador(self):
+
+        minutos = self.tiempo_restante_cazador // 60
+        segundos = self.tiempo_restante_cazador % 60
+
+        # Actualiza el texto del label
+        self.label_temporizador_cazador.config(
+            text=f"Tiempo: {minutos:02d}:{segundos:02d}")
+
+        # Si el tiempo terminó se acaba el juego
+        if self.tiempo_restante_cazador <= 0:
+
+            puntaje_final = self.puntaje_cazador
+            if puntaje_final < 0:
+                puntaje_final = 0
+
+            messagebox.showinfo(
+                "Fin del juego",
+                f"Tiempo terminado.\nPuntaje final: {puntaje_final}"
+            )
+            #Se llama a la función que guarda el puntaje del lugado 
+            self.guardar_puntaje_final_cazador(self.nombre_jugador, puntaje_final)
+            return
+
+        # Baja 1 segundo y vuelve a llamarse la función 
+        self.tiempo_restante_cazador -= 1
+        self.canvas_cazador.after(1000, self.temporizador_cazador)
+
+
+    ##########################################################
+    # Función que actualiza el label del puntaje
+    def actualizar_texto_puntaje_cazador(self):
+
+        if hasattr(self, "label_puntaje_cazador"):
+            self.label_puntaje_cazador.config(
+                text=f"Puntos: {self.puntaje_cazador}"
+            )
+
+ ##################################################################
+
+    # Función recursiva que lee el TXT de puntajes del modo Cazador
+    def leer_puntajes_cazador_txt(self, lineas, resultado=None):
+
+        if resultado is None:
+            resultado = ()
+
+        # Caso base: no hay más líneas
+        if not lineas:
+            return resultado
+
+        linea = lineas[0].strip()
+
+        # Si la línea está vacía, pasa a la siguiente
+        if linea == "":
+            return self.leer_puntajes_cazador_txt(lineas[1:], resultado)
+
+        partes = linea.split(",")
+        nombre = partes[0]
+        puntaje = int(partes[1])
+
+        nuevo_resultado = resultado + ((nombre, puntaje),)
+
+        return self.leer_puntajes_cazador_txt(lineas[1:], nuevo_resultado)
+
+
+
+ ###################################################################
+
+     # Función recursiva que escribe el TXT con los Top 5 del modo Cazador
+    def escribir_puntajes_cazador_txt(self, jugadores, archivo):
+
+        # Caso base
+        if not jugadores:
+            return
+
+        nombre, puntaje = jugadores[0]
+        archivo.write(f"{nombre},{puntaje}\n")
+
+        self.escribir_puntajes_cazador_txt(jugadores[1:], archivo)
+
+ ###################################################################
+    # Función que guarda el puntaje final del jugador en el Top 5 del modo Cazador
+    def guardar_puntaje_final_cazador(self, nombre_jugador, puntaje_final):
+
+        # Si el puntaje es negativo, se guarda 0
+        if puntaje_final < 0:
+            puntaje_final = 0
+
+        archivo_puntajes = "Puntajes_Cazador.txt"
+
+        # Se lee el archivo TXT si existe
+        try:
+            with open(archivo_puntajes, "r") as archivo:
+                lineas = archivo.readlines()
+            jugadores = self.leer_puntajes_cazador_txt(lineas)
+
+        except FileNotFoundError:
+            jugadores = ()
+
+        # Se agregan los nuevos puntajes
+        jugadores = jugadores + ((nombre_jugador, puntaje_final),)
+
+        # Se Ordenan de mayor a menor los puntajes 
+        jugadores_ordenados = tuple(sorted(jugadores, key=lambda x: x[1], reverse=True))
+
+        # Se almacena los Top 5 puntajes
+        top5 = jugadores_ordenados[:5]
+
+        # Se guarda los Top 5
+        with open(archivo_puntajes, "w") as archivo:
+            self.escribir_puntajes_cazador_txt(top5, archivo)
+   
+
+ ###################################################################
+ 
  
     # Función que valida que el jugador aparezca de forma aleatoria en una posición que le sea válida para moverse  
     def celda_para_mover_jugador(self, fila, columna):
@@ -831,8 +1055,11 @@ class PantallaPrincipal:
     
 ##################################################################
  
-####################################################################
-
+ ##################################################################
+    def canvas_juego_escapar(self):
+            messagebox.showinfo("Escapar", "El modo Escapar aún no está implementado.")
+            print("Juego Escapar iniciado")
+ 
  
         
  ###############################################
@@ -1244,8 +1471,6 @@ class enemigoscazador1:
 ###############################################
 
 # Función que permite mover al enemigo del juego del cazador de forma aleatoria 
-    
-    # Función que permite mover al enemigo del juego del cazador de forma aleatoria 
     def mover_enemigo1(self):
 
         # Evitar enciclado básico (busca otra celda y no la misma que ya había pisado)
@@ -1255,6 +1480,10 @@ class enemigoscazador1:
         # Se permite retroceso solo una vez por túnel para evitar que se encicle 
         if not hasattr(self, "retroceso_usado"):
             self.retroceso_usado = False
+
+        # Historial corto para evitar ciclos largos 
+        if not hasattr(self, "historial_posiciones_enemigo1"):
+            self.historial_posiciones_enemigo1 = []
 
         # Se obtiene la posición actual del enemigo, para luego definir hacia donde se debe mover 
         fila_actual = self.posicion_inicial_enemigo1_ejey
@@ -1277,7 +1506,7 @@ class enemigoscazador1:
         for f in range(len(self.mapa_terrenos_cazador)):
             for c in range(len(self.mapa_terrenos_cazador[0])):
                 if isinstance(self.mapa_terrenos_cazador[f][c], Salida):
-                    salidas.append((f, c)) # Genera el lsitado de todas las salidas del mapa (posición 4)
+                    salidas.append((f, c)) # Genera el listado de todas las salidas del mapa (posición 4)
 
         print("Salidas detectadas:", salidas)
 
@@ -1300,7 +1529,7 @@ class enemigoscazador1:
         # Guardar retroceso si es la única opción (al entrar a un tunel se enciclaba o detenida el enemigo)
         retroceso = None
 
-        #
+        #Se define las direcciones a los cuales y los valores que puede asumir el enemigo 
         direcciones = ["arriba", "abajo", "izquierda", "derecha"]
         mov_fila = [-1, 1, 0, 0]
         mov_col = [0, 0, -1, 1]
@@ -1323,6 +1552,10 @@ class enemigoscazador1:
                     retroceso = (direccion, f, c)
                     continue
 
+                # Evitar ciclos largos (si hay alternativas que no estén en historial)
+                if (f, c) in self.historial_posiciones_enemigo1:
+                    continue
+
                 # Guarda el movimiento como válido
                 movimientos_validos.append((direccion, f, c))
 
@@ -1333,18 +1566,38 @@ class enemigoscazador1:
                 if dist_nueva < dist_actual:
                     movimientos_directos.append((direccion, f, c))
 
+
+        # El enemigo trata de moverse pero el historial de movimiento se lo impide (evita que el enemigo se quede dando vueltas en un mismo lugar)
+        if not movimientos_validos:
+             
+            for i in range(4):
+                # Se recorre las 4 direcciones
+                direccion = direcciones[i]
+                # 
+                f = fila_actual + mov_fila[i]
+                c = columna_actual + mov_col[i]
+
+                # Si la posición es válida para moverse y es diferente de la posición actual de cazador, ni un muro  
+                if self.es_posicion_valida(f, c) and (f, c) != (cazador_f, cazador_c):
+                    
+                    # Evita volver EXACTAMENTE a la casilla anterior
+                    if self.ultima_posicion_enemigo1 == (f, c):
+                        retroceso = (direccion, f, c)
+                        continue
+
+                    movimientos_validos.append((direccion, f, c))
+
         print("Movimientos directos:", movimientos_directos)
 
-        # Se le da prioridad hacia la salida más cerna 
+        # Ordenar movimientos directos por el que más acerca a la salida
         if movimientos_directos:
+            movimientos_directos.sort(key=lambda mov: abs(mov[1] - fila_obj) + abs(mov[2] - col_obj))
             direccion, f_nueva, c_nueva = movimientos_directos[0]
             print("Movimiento directo más cercano a la salida aceptado")
 
         else:
             print("No existe un movimiento directo, tratando de salir del túnel")
 
-            
-            #Cuando entra el enemigo a un tunel y trata de devolverse se encicla porque reconoce estos dos movimiento válidos para moverser 
             # Si no hay movimientos válidos, usar retroceso solo 1 vez por túnel
             if not movimientos_validos:
                 if isinstance(celda_actual, Tunel) and (not self.retroceso_usado) and retroceso is not None:
@@ -1353,7 +1606,7 @@ class enemigoscazador1:
                     self.retroceso_usado = True
                 else:
                     print("No hay movimientos válidos— el enemigo queda quieto")
-                    self.canvas_juego.after(350, self.mover_enemigo1)
+                    self.canvas_juego.after(450, self.mover_enemigo1)
                     return
 
             elegido = None
@@ -1385,6 +1638,12 @@ class enemigoscazador1:
         # Guarda la última posición del enemigo 
         self.ultima_posicion_enemigo1 = (fila_actual, columna_actual)
 
+
+        # Guardar historial (evita ciclos largos)
+        self.historial_posiciones_enemigo1.append((fila_actual, columna_actual))
+        if len(self.historial_posiciones_enemigo1) > 4:
+            self.historial_posiciones_enemigo1.pop(0)
+
         # Actualizar en canvas
         self.actualizar_posicion1(f_nueva, c_nueva, direccion)
 
@@ -1395,7 +1654,8 @@ class enemigoscazador1:
             self.retroceso_usado = False
 
         # Siguiente paso
-        self.canvas_juego.after(350, self.mover_enemigo1)
+        self.canvas_juego.after(450, self.mover_enemigo1)
+
 
             
 ##################################################################################################
@@ -1613,6 +1873,10 @@ class enemigoscazador2:
         if not hasattr(self, "retroceso_usado2"):
             self.retroceso_usado2 = False
 
+        # Historial corto para evitar ciclos largos 
+        if not hasattr(self, "historial_posiciones_enemigo2"):
+            self.historial_posiciones_enemigo2 = []
+
         # Se obtiene la posición actual del enemigo, para luego definir hacia donde se debe mover 
         fila_actual = self.posicion_inicial_enemigo2_ejey
         columna_actual = self.posicion_inicial_enemigo2_ejex
@@ -1634,7 +1898,7 @@ class enemigoscazador2:
         for f in range(len(self.mapa_terrenos_cazador)):
             for c in range(len(self.mapa_terrenos_cazador[0])):
                 if isinstance(self.mapa_terrenos_cazador[f][c], Salida):
-                    salidas.append((f, c)) 
+                    salidas.append((f, c)) # Genera el listado de todas las salidas del mapa (posición 4)
 
         print("Salidas detectadas:", salidas)
 
@@ -1645,17 +1909,19 @@ class enemigoscazador2:
         # Se identifica la fila y columna que estén mas cerca de la salida con respecto al enemigo 
         fila_obj, col_obj = salida_objetivo
 
-        # Generación de movimientos posibles 
-        movimientos_validos = [] 
-        movimientos_directos = [] 
+        # Generación de movimientos posibles (se evalúa todas las celdas que tiene el enemigo en el laberinto para moverse)
 
-        # posición del cazador 
+        movimientos_validos = [] # Son los movimientos que puede hacer el enmigo y que no chocan contra un muro 
+        movimientos_directos = [] # son los movimientos que se acercan a la salida o el enemigo 
+
+        # Se hace una copia de la posición actual del cazador (el enemigo debe evitar acercarse a este)
         cazador_f = self.posicion_inicial_cazador_ejey
         cazador_c = self.posicion_inicial_cazador_ejex
 
-        # Guardar retroceso
+        # Guardar retroceso si es la única opción (al entrar a un tunel se enciclaba o detenida el enemigo)
         retroceso = None
 
+        #Se define las direcciones a los cuales y los valores que puede asumir el enemigo 
         direcciones = ["arriba", "abajo", "izquierda", "derecha"]
         mov_fila = [-1, 1, 0, 0]
         mov_col = [0, 0, -1, 1]
@@ -1666,19 +1932,23 @@ class enemigoscazador2:
             f = fila_actual + mov_fila[i]
             c = columna_actual + mov_col[i]
 
-            # Se verifica si la posición es valida
+            # Se verifica si la posición es valida (no sea un muro)
             if self.es_posicion_valida(f, c):
 
                 # Evita que el enemigo se mueva hacia el cazador 
                 if (f, c) == (cazador_f, cazador_c):
                     continue
 
-                # Evitar retroceso inmediato
+                # Si es la última posición, no la usa de una vez, solo se guarda para retroceso de emergencia
                 if self.ultima_posicion_enemigo2 == (f, c):
                     retroceso = (direccion, f, c)
                     continue
 
-                # Guarda movimiento válido
+                # Evitar ciclos largos (si hay alternativas que no estén en historial)
+                if (f, c) in self.historial_posiciones_enemigo2:
+                    continue
+
+                # Guarda el movimiento como válido
                 movimientos_validos.append((direccion, f, c))
 
                 # Movimiento que acerca a la salida
@@ -1688,30 +1958,52 @@ class enemigoscazador2:
                 if dist_nueva < dist_actual:
                     movimientos_directos.append((direccion, f, c))
 
+
+        # El enemigo trata de moverse pero el historial de movimiento se lo impide (evita que el enemigo se quede dando vueltas en un mismo lugar)
+        if not movimientos_validos:
+             
+            for i in range(4):
+                # Se recorre las 4 direcciones
+                direccion = direcciones[i]
+                # 
+                f = fila_actual + mov_fila[i]
+                c = columna_actual + mov_col[i]
+
+                # Si la posición es válida para moverse y es diferente de la posición actual de cazador, ni un muro  
+                if self.es_posicion_valida(f, c) and (f, c) != (cazador_f, cazador_c):
+                    
+                    # Evita volver EXACTAMENTE a la casilla anterior
+                    if self.ultima_posicion_enemigo2 == (f, c):
+                        retroceso = (direccion, f, c)
+                        continue
+
+                    movimientos_validos.append((direccion, f, c))
+
         print("Movimientos directos:", movimientos_directos)
 
-        # Se le da prioridad hacia la salida más cercana 
+        # Ordenar movimientos directos por el que más acerca a la salida
         if movimientos_directos:
+            movimientos_directos.sort(key=lambda mov: abs(mov[1] - fila_obj) + abs(mov[2] - col_obj))
             direccion, f_nueva, c_nueva = movimientos_directos[0]
             print("Movimiento directo más cercano a la salida aceptado")
 
         else:
             print("No existe un movimiento directo, tratando de salir del túnel")
 
-            # Retroceso seguro sólo 1 vez en túnel
+            # Si no hay movimientos válidos, usar retroceso solo 1 vez por túnel
             if not movimientos_validos:
                 if isinstance(celda_actual, Tunel) and (not self.retroceso_usado2) and retroceso is not None:
                     print("No hay movimientos válidos — RETROCESO SEGURO")
                     movimientos_validos.append(retroceso)
                     self.retroceso_usado2 = True
                 else:
-                    print("No hay movimientos válidos — el enemigo queda quieto")
-                    self.canvas_juego.after(350, self.mover_enemigo2)
+                    print("No hay movimientos válidos— el enemigo queda quieto")
+                    self.canvas_juego.after(450, self.mover_enemigo2)
                     return
 
             elegido = None
 
-            # Priorizar camino
+            # Se prioriza que el enemigo se mueva hacia el camino que a un tunel 
             for direccion, f, c in movimientos_validos:
                 celda = self.mapa_terrenos_cazador[f][c]
                 if isinstance(celda, Camino):
@@ -1719,7 +2011,7 @@ class enemigoscazador2:
                     print("→ Prioridad: camino encontrado")
                     break
 
-            # Priorizar túnel si no encontró camino
+            # Si la celda no es un camino se permite ingresar a tunel 
             if elegido is None:
                 for direccion, f, c in movimientos_validos:
                     celda = self.mapa_terrenos_cazador[f][c]
@@ -1728,26 +2020,34 @@ class enemigoscazador2:
                         print(" Túnel válido encontrado")
                         break
 
-            # Movimiento aleatorio seguro
+            # Aleatorio seguro
             if elegido:
                 direccion, f_nueva, c_nueva = elegido
             else:
                 direccion, f_nueva, c_nueva = random.choice(movimientos_validos)
                 print("→ Movimiento aleatorio seguro")
 
-        # Guarda última posición
+        # Guarda la última posición del enemigo 
         self.ultima_posicion_enemigo2 = (fila_actual, columna_actual)
 
-        # Actualizar sprite
+
+        # Guardar historial (evita ciclos largos)
+        self.historial_posiciones_enemigo2.append((fila_actual, columna_actual))
+        if len(self.historial_posiciones_enemigo2) > 4:
+            self.historial_posiciones_enemigo2.pop(0)
+
+        # Actualizar en canvas
         self.actualizar_posicion2(f_nueva, c_nueva, direccion)
 
-        # Resetear retroceso cuando NO está en túnel
+        
+        # Resetear retroceso cuando ya NO está en túnel
         celda_nueva = self.mapa_terrenos_cazador[f_nueva][c_nueva]
         if not isinstance(celda_nueva, Tunel):
             self.retroceso_usado2 = False
 
-        # Repetir
-        self.canvas_juego.after(350, self.mover_enemigo2)
+        # Siguiente paso
+        self.canvas_juego.after(450, self.mover_enemigo2)
+
 
 
 ##################################################################################################
@@ -1956,24 +2256,29 @@ class enemigoscazador3:
     ##################################################################################################
     
     # Función que permite mover al enemigo #3 del juego del cazador de forma aleatoria 
+        # Función que permite mover al enemigo del juego del cazador de forma aleatoria 
     def mover_enemigo3(self):
 
-        # Evitar enciclado básico 
+        # Evitar enciclado básico (busca otra celda y no la misma que ya había pisado)
         if not hasattr(self, "ultima_posicion_enemigo3"):
             self.ultima_posicion_enemigo3 = None
 
-        # Retroceso solo una vez
+        # Se permite retroceso solo una vez por túnel para evitar que se encicle 
         if not hasattr(self, "retroceso_usado3"):
             self.retroceso_usado3 = False
 
-        # Posición actual
+        # Historial corto para evitar ciclos largos 
+        if not hasattr(self, "historial_posiciones_enemigo3"):
+            self.historial_posiciones_enemigo3 = []
+
+        # Se obtiene la posición actual del enemigo, para luego definir hacia donde se debe mover 
         fila_actual = self.posicion_inicial_enemigo3_ejey
         columna_actual = self.posicion_inicial_enemigo3_ejex
 
-        # Tipo de celda
+        #Se identifica de que tipo de celda esta el enemigo encima (muro, camino, salida, liana)
         celda_actual = self.mapa_terrenos_cazador[fila_actual][columna_actual]
 
-        # Si está en salida
+        ## Si la celda sobre la que se esta es una salida se elimina al enemigo 
         if isinstance(celda_actual, Salida):
             print(f" El enemigo #3 ha encontrado una salida y sale de este en {fila_actual} {columna_actual}")
             self.canvas_juego.delete(self.enemigo3_objeto)
@@ -1982,29 +2287,35 @@ class enemigoscazador3:
         print(f"\n>>> ENEMIGO #3 EN: {fila_actual} {columna_actual}")
 
     ########
-        # Buscar todas las salidas
+        #El enemigo busca todas las salidas que aparecen en el laberinto 
         salidas = []
         for f in range(len(self.mapa_terrenos_cazador)):
             for c in range(len(self.mapa_terrenos_cazador[0])):
                 if isinstance(self.mapa_terrenos_cazador[f][c], Salida):
-                    salidas.append((f, c))
+                    salidas.append((f, c)) # Genera el listado de todas las salidas del mapa (posición 4)
 
         print("Salidas detectadas:", salidas)
 
-        # Salida más cercana
+        # Elección de la salida más cercana usando minimo (min)
         salida_objetivo = min(salidas, key=lambda s: abs(s[0] - fila_actual) + abs(s[1] - columna_actual))
         print("→ SALIDA OBJETIVO:", salida_objetivo)
 
+        # Se identifica la fila y columna que estén mas cerca de la salida con respecto al enemigo 
         fila_obj, col_obj = salida_objetivo
 
-        movimientos_validos = []
-        movimientos_directos = []
+        # Generación de movimientos posibles (se evalúa todas las celdas que tiene el enemigo en el laberinto para moverse)
 
+        movimientos_validos = [] # Son los movimientos que puede hacer el enmigo y que no chocan contra un muro 
+        movimientos_directos = [] # son los movimientos que se acercan a la salida o el enemigo 
+
+        # Se hace una copia de la posición actual del cazador (el enemigo debe evitar acercarse a este)
         cazador_f = self.posicion_inicial_cazador_ejey
         cazador_c = self.posicion_inicial_cazador_ejex
 
+        # Guardar retroceso si es la única opción (al entrar a un tunel se enciclaba o detenida el enemigo)
         retroceso = None
 
+        #Se define las direcciones a los cuales y los valores que puede asumir el enemigo 
         direcciones = ["arriba", "abajo", "izquierda", "derecha"]
         mov_fila = [-1, 1, 0, 0]
         mov_col = [0, 0, -1, 1]
@@ -2015,32 +2326,65 @@ class enemigoscazador3:
             f = fila_actual + mov_fila[i]
             c = columna_actual + mov_col[i]
 
+            # Se verifica si la posición es valida (no sea un muro)
             if self.es_posicion_valida(f, c):
 
+                # Evita que el enemigo se mueva hacia el cazador 
                 if (f, c) == (cazador_f, cazador_c):
                     continue
 
+                # Si es la última posición, no la usa de una vez, solo se guarda para retroceso de emergencia
                 if self.ultima_posicion_enemigo3 == (f, c):
                     retroceso = (direccion, f, c)
                     continue
 
+                # Evitar ciclos largos (si hay alternativas que no estén en historial)
+                if (f, c) in self.historial_posiciones_enemigo3:
+                    continue
+
+                # Guarda el movimiento como válido
                 movimientos_validos.append((direccion, f, c))
 
+                # Movimiento que acerca a la salida
                 dist_actual = abs(fila_actual - fila_obj) + abs(columna_actual - col_obj)
                 dist_nueva = abs(f - fila_obj) + abs(c - col_obj)
 
                 if dist_nueva < dist_actual:
                     movimientos_directos.append((direccion, f, c))
 
+
+        # El enemigo trata de moverse pero el historial de movimiento se lo impide (evita que el enemigo se quede dando vueltas en un mismo lugar)
+        if not movimientos_validos:
+             
+            for i in range(4):
+                # Se recorre las 4 direcciones
+                direccion = direcciones[i]
+                # 
+                f = fila_actual + mov_fila[i]
+                c = columna_actual + mov_col[i]
+
+                # Si la posición es válida para moverse y es diferente de la posición actual de cazador, ni un muro  
+                if self.es_posicion_valida(f, c) and (f, c) != (cazador_f, cazador_c):
+                    
+                    # Evita volver EXACTAMENTE a la casilla anterior
+                    if self.ultima_posicion_enemigo3 == (f, c):
+                        retroceso = (direccion, f, c)
+                        continue
+
+                    movimientos_validos.append((direccion, f, c))
+
         print("Movimientos directos:", movimientos_directos)
 
+        # Ordenar movimientos directos por el que más acerca a la salida
         if movimientos_directos:
+            movimientos_directos.sort(key=lambda mov: abs(mov[1] - fila_obj) + abs(mov[2] - col_obj))
             direccion, f_nueva, c_nueva = movimientos_directos[0]
             print("Movimiento directo más cercano a la salida aceptado")
 
         else:
             print("No existe un movimiento directo, tratando de salir del túnel")
 
+            # Si no hay movimientos válidos, usar retroceso solo 1 vez por túnel
             if not movimientos_validos:
                 if isinstance(celda_actual, Tunel) and (not self.retroceso_usado3) and retroceso is not None:
                     print("No hay movimientos válidos — RETROCESO SEGURO")
@@ -2048,38 +2392,53 @@ class enemigoscazador3:
                     self.retroceso_usado3 = True
                 else:
                     print("No hay movimientos válidos— el enemigo queda quieto")
-                    self.canvas_juego.after(350, self.mover_enemigo3)
+                    self.canvas_juego.after(450, self.mover_enemigo3)
                     return
 
             elegido = None
 
-            # Prioridad: camino
+            # Se prioriza que el enemigo se mueva hacia el camino que a un tunel 
             for direccion, f, c in movimientos_validos:
-                if isinstance(self.mapa_terrenos_cazador[f][c], Camino):
+                celda = self.mapa_terrenos_cazador[f][c]
+                if isinstance(celda, Camino):
                     elegido = (direccion, f, c)
                     print("→ Prioridad: camino encontrado")
                     break
 
-            # Luego túnel
+            # Si la celda no es un camino se permite ingresar a tunel 
             if elegido is None:
                 for direccion, f, c in movimientos_validos:
-                    if isinstance(self.mapa_terrenos_cazador[f][c], Tunel):
+                    celda = self.mapa_terrenos_cazador[f][c]
+                    if isinstance(celda, Tunel):
                         elegido = (direccion, f, c)
                         print(" Túnel válido encontrado")
                         break
 
+            # Aleatorio seguro
             if elegido:
                 direccion, f_nueva, c_nueva = elegido
             else:
                 direccion, f_nueva, c_nueva = random.choice(movimientos_validos)
                 print("→ Movimiento aleatorio seguro")
 
+        # Guarda la última posición del enemigo 
         self.ultima_posicion_enemigo3 = (fila_actual, columna_actual)
 
+
+        # Guardar historial (evita ciclos largos)
+        self.historial_posiciones_enemigo3.append((fila_actual, columna_actual))
+        if len(self.historial_posiciones_enemigo3) > 4:
+            self.historial_posiciones_enemigo3.pop(0)
+
+        # Actualizar en canvas
         self.actualizar_posicion3(f_nueva, c_nueva, direccion)
 
+        
+        # Resetear retroceso cuando ya NO está en túnel
         celda_nueva = self.mapa_terrenos_cazador[f_nueva][c_nueva]
         if not isinstance(celda_nueva, Tunel):
             self.retroceso_usado3 = False
 
-        self.canvas_juego.after(350, self.mover_enemigo3)
+        # Siguiente paso
+        self.canvas_juego.after(450, self.mover_enemigo3)
+
